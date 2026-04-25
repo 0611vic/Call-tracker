@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Call訊追蹤</title>
+<meta name="theme-color" content="#0F1117"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Call訊追蹤"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F1117;--bg2:#1A1D2A;--bg3:#141620;--border:#2A2D3A;
+  --text:#E8E6E0;--muted:#6B7280;--dim:#3A3D4A;
+  --gold:#E8A838;--teal:#4FC3A1;--red:#E05C7A;--blue:#7B8FE8;
+  --font:'Noto Sans TC',sans-serif;--mono:'DM Mono',monospace;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-tap-highlight-color:transparent}
+input,select,textarea{font-family:inherit;color:var(--text)}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.4) brightness(1.5)}
+button{cursor:pointer;font-family:var(--font)}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+#header{background:linear-gradient(135deg,var(--bg2) 0%,var(--bg) 100%);border-bottom:1px solid var(--border);padding:16px 16px 0}
+#header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.h-sub{font-size:10px;letter-spacing:3px;color:var(--muted);font-family:var(--mono);margin-bottom:3px}
+#header-top h1{font-size:20px;font-weight:700;color:#F0EDE8}
+#summary-btn{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;transition:all .2s}
+#summary-btn.active{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+#stats-bar{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.s-item{display:flex;align-items:center;gap:5px;font-size:11px}
+.s-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.s-name{color:var(--muted)}
+.s-pnl{font-family:var(--mono);font-size:11px}
+#tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+.tab{padding:9px 15px;border:none;background:transparent;color:var(--muted);font-size:13px;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;font-family:var(--font);border-radius:6px 6px 0 0}
+.tab.active{font-weight:700;background:var(--bg2)}
+.tab .wl{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:4px}
+#summary-panel{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px;display:none}
+#summary-panel.open{display:block}
+.p-label{font-size:10px;letter-spacing:3px;color:var(--muted);font-family:var(--mono);margin-bottom:12px}
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.asset-card{background:var(--bg);border-radius:10px;padding:12px;border:1px solid var(--border)}
+.asset-card label{font-size:11px;color:var(--muted);display:block;margin-bottom:6px}
+.asset-row{display:flex;align-items:center;gap:4px}
+.asset-prefix{font-size:12px;color:var(--muted)}
+.asset-card input{background:transparent;border:none;outline:none;font-size:17px;font-weight:700;font-family:var(--mono);width:100%;min-width:0}
+.asset-hint{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:3px}
+.budget-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px}
+.bcard{background:var(--bg);border-radius:10px;padding:12px}
+.bcard-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.bcard-name{font-size:13px;font-weight:600}
+.bcard-iw{display:flex;align-items:center;gap:3px}
+.bcard-iw input{background:var(--bg2);border:none;outline:none;font-size:13px;font-family:var(--mono);width:54px;border-radius:4px;padding:2px 5px;text-align:right;color:var(--text)}
+.bcard-iw span{font-size:11px;color:var(--muted)}
+.wbar-bg{background:var(--border);border-radius:4px;height:5px;margin-bottom:6px;overflow:hidden}
+.wbar{height:100%;border-radius:4px;transition:width .3s}
+.bcard-stats{display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);color:var(--muted)}
+.bcard-pnl{font-size:12px;font-family:var(--mono);font-weight:600;margin-top:5px}
+#total-bar{margin-top:14px;padding:11px 14px;background:var(--bg);border-radius:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+#total-bar span:first-child{font-size:12px;color:var(--muted)}
+#total-pnl{font-size:19px;font-weight:700;font-family:var(--mono)}
+#main{padding:16px}
+#teacher-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.th-name{font-size:22px;font-weight:700}
+.th-meta{display:flex;gap:14px;margin-top:6px;flex-wrap:wrap}
+.th-meta span{font-size:11px;color:var(--muted);font-family:var(--mono)}
+#notes-ta{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:#9CA3AF;font-size:12px;resize:vertical;min-height:55px;width:220px;outline:none;line-height:1.5}
+#table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.col-headers{display:grid;gap:5px;padding:6px 10px;margin-bottom:3px}
+.col-h{font-size:10px;color:var(--dim);letter-spacing:1px;font-family:var(--mono)}
+.h-row{margin-bottom:6px}
+.h-main{display:grid;gap:5px;padding:9px 10px;background:var(--bg2);border-radius:10px;border:1px solid var(--border);align-items:center;transition:all .2s}
+.h-main.hm{border-radius:10px 10px 0 0;border-bottom-color:transparent}
+.h-main.at-stop{background:#E05C7A11;border-color:#E05C7A44}
+.h-main.mforce{background:#E05C7A22;border-color:#E05C7A88}
+.ci{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:12px;outline:none;width:100%;transition:border-color .15s;color:var(--text)}
+.ci:focus{border-color:var(--muted)}
+.ci.num{font-family:var(--mono)}
+.ci.warn{border-color:var(--red);color:var(--red)}
+.ci.dt{font-family:var(--mono);font-size:11px}
+.pnl-c{text-align:right}
+.pnl-amt{font-size:12px;font-family:var(--mono);font-weight:700}
+.pnl-pct{font-size:10px;font-family:var(--mono)}
+.del-btn{background:transparent;border:none;color:var(--dim);font-size:16px;padding:3px 5px;border-radius:4px;transition:color .15s;line-height:1}
+.del-btn:active{color:var(--red)}
+.msub{background:var(--bg3);border-radius:0 0 10px 10px;border:1px solid var(--border);border-top:none;overflow:hidden;display:flex;align-items:stretch}
+.msub.mf{border-color:#E05C7A88}
+.msub.mw{border-color:#E8A83844}
+.msub.mb{border-color:#7B8FE833}
+.mtoggle{padding:7px 11px;cursor:pointer;display:flex;align-items:center;gap:6px;border-right:1px solid var(--border);flex-shrink:0;user-select:none}
+.tt{width:28px;height:16px;border-radius:8px;position:relative;transition:background .2s;flex-shrink:0}
+.tth{position:absolute;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s}
+.mlabel{font-size:11px;white-space:nowrap}
+.minfo{padding:7px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex:1}
+.mi{font-size:11px;font-family:var(--mono)}
+.mi .ml{color:var(--muted)}
+.msel{background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:12px;padding:2px 5px;font-family:var(--mono);outline:none;color:var(--blue)}
+#add-btn{margin-top:6px;width:100%;padding:10px;background:transparent;border-radius:10px;font-size:13px;transition:background .2s;border:1px dashed}
+.stop-warn{margin-top:14px;padding:10px 14px;border-radius:8px;font-size:13px;background:#E05C7A22;border:1px solid #E05C7A44;color:var(--red)}
+#footer{padding:16px;border-top:1px solid var(--bg2);text-align:center;color:var(--dim);font-size:10px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-top">
+    <div>
+      <div class="h-sub">CALL 訊追蹤系統</div>
+      <h1>Call訊追蹤</h1>
+    </div>
+    <button id="summary-btn" onclick="toggleSummary()">資產總覽</button>
+  </div>
+  <div id="stats-bar"></div>
+  <div id="tabs"></div>
+</div>
+
+<div id="summary-panel">
+  <div class="p-label">ASSET OVERVIEW</div>
+  <div class="asset-grid">
+    <div class="asset-card" style="border-color:#E8A83833">
+      <label>總資產</label>
+      <div class="asset-row"><span class="asset-prefix">NT$</span>
+        <input type="number" id="a-total" placeholder="0" oninput="saveCash()" style="color:var(--gold)"/>
+      </div>
+      <div class="asset-hint" id="h-total"></div>
+    </div>
+    <div class="asset-card" style="border-color:#4FC3A133">
+      <label>可用現金</label>
+      <div class="asset-row"><span class="asset-prefix">NT$</span>
+        <input type="number" id="a-cash" placeholder="0" oninput="saveCash()" style="color:var(--teal)"/>
+      </div>
+      <div class="asset-hint" id="h-cash"></div>
+    </div>
+    <div class="asset-card" style="border-color:#7B8FE833">
+      <label>鎖定資金</label>
+      <div class="asset-row"><span class="asset-prefix">NT$</span>
+        <input type="number" id="a-locked" placeholder="0" oninput="saveCash()" style="color:var(--blue)"/>
+      </div>
+      <div class="asset-hint" id="h-locked"></div>
+    </div>
+  </div>
+  <div class="p-label">TEACHER BUDGETS</div>
+  <div class="budget-grid" id="budget-grid"></div>
+  <div id="total-bar">
+    <span>合計總損益</span>
+    <span id="total-pnl">-</span>
+  </div>
+</div>
+
+<div id="main"></div>
+<div id="footer">數據儲存於瀏覽器快取 · 請自行注意投資風險</div>
+
+<script>
+const TEACHERS=[
+  {id:'lei',name:'雷老闆',color:'#E8A838'},
+  {id:'li', name:'小李',color:'#4FC3A1'},
+  {id:'jia',name:'佳和',color:'#E05C7A'},
+  {id:'yuan',name:'朱家泓',color:'#7B8FE8'},
+];
+
+function newH(){
+  return {id:Date.now()+Math.random(),date:'',stock:'',callPrice:'',myPrice:'',shares:'',currentPrice:'',stopLoss:'',isMargin:false,marginRatio:'6'};
+}
+
+function loadState(){
+  try{const r=localStorage.getItem('ctrk_v3');if(r)return JSON.parse(r);}catch(e){}
+  return {teachers:TEACHERS.map(t=>({...t,budget:1000000,notes:'',holdings:[newH()]})),cash:{},activeTab:'lei'};
+}
+function saveState(){try{localStorage.setItem('ctrk_v3',JSON.stringify(state));}catch(e){}}
+
+let state=loadState();
+
+function fmtM(n){
+  if(isNaN(n)||n===null) return '-';
+  const a=Math.abs(n);
+  return a>=10000?(n/10000).toFixed(1)+'萬':Math.round(n).toLocaleString('zh-TW');
+}
+
+function calcPnL(h){
+  const cost=Number(h.myPrice)*Number(h.shares)*1000;
+  const val=Number(h.currentPrice)*Number(h.shares)*1000;
+  if(!cost||!val) return null;
+  const pnl=val-cost,pct=(pnl/cost)*100;
+  let mi=null;
+  if(h.isMargin&&h.marginRatio&&h.myPrice){
+    const r=Number(h.marginRatio)/10;
+    const loan=cost*r,self=cost*(1-r);
+    const maint=val>0?(val/loan)*100:0;
+    mi={loan,self,maint,warnP:(loan*1.3)/(Number(h.shares)*1000),forceP:(loan*1.2)/(Number(h.shares)*1000)};
+  }
+  return {pnl,pct,val,cost,mi};
+}
+
+function tStats(t){
+  let inv=0,cv=0,cnt=0;
+  t.holdings.forEach(h=>{const r=calcPnL(h);if(r){inv+=r.cost;cv+=r.val;cnt++;}});
+  return {inv,pnl:cv-inv,wl:t.budget>0?(inv/t.budget)*100:0,cnt};
+}
+
+function AT(){return state.teachers.find(t=>t.id===state.activeTab);}
+
+function render(){renderTabs();renderStats();renderMain();}
+
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=state.teachers.map(t=>{
+    const s=tStats(t),a=t.id===state.activeTab;
+    return `<button class="tab${a?' active':''}" style="${a?`color:${t.color};border-bottom-color:${t.color}`:''}" onclick="setTab('${t.id}')">
+      ${t.name}${s.wl>0?`<span class="wl">${s.wl.toFixed(0)}%</span>`:''}
+    </button>`;
+  }).join('');
+}
+
+function renderStats(){
+  document.getElementById('stats-bar').innerHTML=state.teachers.map(t=>{
+    const s=tStats(t),c=s.pnl>0?'var(--teal)':s.pnl<0?'var(--red)':'var(--muted)';
+    return `<div class="s-item"><div class="s-dot" style="background:${t.color}"></div><span class="s-name">${t.name}</span><span class="s-pnl" style="color:${c}">${s.cnt>0?(s.pnl>=0?'+':'')+fmtM(s.pnl):'未入場'}</span></div>`;
+  }).join('');
+}
+
+function renderSummary(){
+  ['total','cash','locked'].forEach(k=>{
+    const v=Number(state.cash[k]||0);
+    const el=document.getElementById('h-'+k);
+    if(el) el.textContent=v?fmtM(v):'';
+  });
+  const bg=document.getElementById('budget-grid');
+  bg.innerHTML=state.teachers.map(t=>{
+    const s=tStats(t),rem=t.budget-s.inv;
+    const wc=s.wl>80?'var(--red)':s.wl>50?'var(--gold)':'var(--teal)';
+    return `<div class="bcard" style="border:1px solid ${t.color}33">
+      <div class="bcard-top">
+        <span class="bcard-name" style="color:${t.color}">${t.name}</span>
+        <div class="bcard-iw"><input type="number" value="${t.budget/10000}" onchange="updBudget('${t.id}',this.value)"/><span>萬</span></div>
+      </div>
+      <div class="wbar-bg"><div class="wbar" style="width:${Math.min(s.wl,100)}%;background:${wc}"></div></div>
+      <div class="bcard-stats"><span>已用 ${fmtM(s.inv)}</span><span style="color:${rem>=0?'var(--teal)':'var(--red)'}">剩 ${fmtM(Math.abs(rem))}</span></div>
+      ${s.cnt>0?`<div class="bcard-pnl" style="color:${s.pnl>=0?'var(--teal)':'var(--red)'}">${s.pnl>=0?'+':''}${fmtM(s.pnl)} (${((s.pnl/s.inv)*100).toFixed(1)}%)</div>`:''}
+    </div>`;
+  }).join('');
+  const tot=state.teachers.reduce((a,t)=>a+tStats(t).pnl,0);
+  const el=document.getElementById('total-pnl');
+  if(el){el.textContent=(tot>=0?'+':'')+fmtM(tot);el.style.color=tot>=0?'var(--teal)':'var(--red)';}
+}
+
+function renderMain(){
+  const t=AT();if(!t)return;
+  const s=tStats(t);
+  const wc=s.wl>80?'var(--red)':s.wl>50?'var(--gold)':'var(--teal)';
+  const pc=s.pnl>=0?'var(--teal)':'var(--red)';
+  const cols='88px 100px 78px 78px 54px 78px 78px 70px 30px';
+
+  let rows='';
+  t.holdings.forEach(h=>{
+    const p=calcPnL(h);
+    const atStop=h.currentPrice&&h.stopLoss&&Number(h.currentPrice)<=Number(h.stopLoss);
+    const mf=p?.mi&&p.mi.maint<120&&p.mi.maint>0;
+    const mw=p?.mi&&p.mi.maint<130&&p.mi.maint>0;
+    const mc=mf?'mforce':atStop?'at-stop':'';
+
+    const pnlHtml=p?`<div class="pnl-c"><div class="pnl-amt" style="color:${p.pnl>=0?'var(--teal)':'var(--red)'}">${p.pnl>=0?'+':''}${fmtM(p.pnl)}</div><div class="pnl-pct" style="color:${p.pnl>=0?'var(--teal)':'var(--red)'}">${p.pct>=0?'+':''}${p.pct.toFixed(1)}%</div></div>`
+      :`<div class="pnl-c" style="color:var(--dim);font-size:12px">-</div>`;
+
+    let msubHtml='';
+    if(h.isMargin&&p?.mi){
+      const mi=p.mi,mc2=mf?'var(--red)':mw?'var(--gold)':'var(--teal)';
+      const flag=mf?' ⚠️斷頭':mw?' ⚠️追繳':' ✓';
+      msubHtml=`<div class="minfo">
+        <div class="mi"><span class="ml">成數 </span><select class="msel" onchange="updH('${t.id}','${h.id}','marginRatio',this.value)">
+          <option value="4"${h.marginRatio=='4'?' selected':''}>四成</option>
+          <option value="5"${h.marginRatio=='5'?' selected':''}>五成</option>
+          <option value="6"${h.marginRatio=='6'?' selected':''}>六成</option>
+          <option value="7"${h.marginRatio=='7'?' selected':''}>七成</option>
+        </select></div>
+        <div class="mi"><span class="ml">自備 </span><span>${fmtM(mi.self)}</span></div>
+        <div class="mi"><span class="ml">融資額 </span><span style="color:var(--blue)">${fmtM(mi.loan)}</span></div>
+        <div class="mi"><span class="ml">維持率 </span><span style="color:${mc2};font-weight:700">${mi.maint.toFixed(0)}%${flag}</span></div>
+        <div class="mi"><span class="ml">追繳價 </span><span style="color:var(--gold)">${mi.warnP.toFixed(1)}</span></div>
+      </div>`;
+    }
+    rows+=`<div class="h-row">
+      <div class="h-main${h.isMargin?' hm':''} ${mc}" style="grid-template-columns:${cols}">
+        <input class="ci dt" type="date" value="${h.date||''}" onchange="updH('${t.id}','${h.id}','date',this.value)"/>
+        <input class="ci" type="text" placeholder="名稱" value="${h.stock||''}" oninput="updH('${t.id}','${h.id}','stock',this.value)"/>
+        <input class="ci num" type="number" placeholder="Call價" value="${h.callPrice||''}" oninput="updH('${t.id}','${h.id}','callPrice',this.value)"/>
+        <input class="ci num" type="number" placeholder="均價" value="${h.myPrice||''}" oninput="updH('${t.id}','${h.id}','myPrice',this.value)"/>
+        <input class="ci num" type="number" placeholder="張" value="${h.shares||''}" oninput="updH('${t.id}','${h.id}','shares',this.value)"/>
+        <input class="ci num${atStop||mf?' warn':''}" type="number" placeholder="現價" value="${h.currentPrice||''}" oninput="updH('${t.id}','${h.id}','currentPrice',this.value)"/>
+        <input class="ci num" type="number" placeholder="停損" value="${h.stopLoss||''}" oninput="updH('${t.id}','${h.id}','stopLoss',this.value)"/>
+        ${pnlHtml}
+        <button class="del-btn" onclick="delH('${t.id}','${h.id}')">×</button>
+      </div>
+      <div class="msub ${h.isMargin?'mb':''}" style="${!h.isMargin?'border:none':''}">
+        <div class="mtoggle" onclick="togM('${t.id}','${h.id}')">
+          <span class="mlabel" style="color:${h.isMargin?'var(--blue)':'var(--dim)'}">${h.isMargin?'已開融資':'融資關閉'}</span>
+        </div>
+        ${h.isMargin?msubHtml:''}
+      </div>
+    </div>`;
+  });
+
+  const hasStop=t.holdings.some(h=>h.currentPrice&&h.stopLoss&&Number(h.currentPrice)<=Number(h.stopLoss));
+
+  document.getElementById('main').innerHTML=`
+    <div id="teacher-header">
+      <div>
+        <div class="th-name" style="color:${t.color}">${t.name}</div>
+        <div class="th-meta">
+          <span>水位 <strong style="color:${wc}">${s.wl.toFixed(1)}%</strong></span>
+          <span>損益 <strong style="color:${pc}">${s.cnt>0?(s.pnl>=0?'+':'')+fmtM(s.pnl):'未入場'}</strong></span>
+        </div>
+      </div>
+      <textarea id="notes-ta" placeholder="操作備忘錄..." oninput="updNotes('${t.id}',this.value)">${t.notes||''}</textarea>
+    </div>
+    <div id="table-wrap">
+      <div class="col-headers" style="grid-template-columns:${cols}">
+        <div class="col-h">日期</div><div class="col-h">股票</div><div class="col-h">Call價</div>
+        <div class="col-h">均價</div><div class="col-h">張數</div><div class="col-h">現價</div>
+        <div class="col-h">停損</div><div class="col-h">損益</div><div class="col-h"></div>
+      </div>
+      ${rows}
+    </div>
+    <button id="add-btn" style="border-color:${t.color}55;color:${t.color}" onclick="addH('${t.id}')">+ 新增標的</button>
+    ${hasStop?`<div class="stop-warn">⚠️ 提醒：已有標的觸及停損價！</div>`:''}
+  `;
+}
+
+function setTab(id){state.activeTab=id;saveState();renderTabs();renderMain();}
+
+function toggleSummary(){
+  const p=document.getElementById('summary-panel'), b=document.getElementById('summary-btn');
+  p.classList.toggle('open');
+  b.classList.toggle('active');
+  b.textContent=p.classList.contains('open')?'收起總覽':'資產總覽';
+  if(p.classList.contains('open')) renderSummary();
+}
+
+function saveCash(){
+  state.cash={
+    total:document.getElementById('a-total').value,
+    cash:document.getElementById('a-cash').value,
+    locked:document.getElementById('a-locked').value
+  };
+  saveState();
+  renderSummary();
+}
+
+function updBudget(tid,val){
+  const t=state.teachers.find(x=>x.id===tid);
+  if(t){t.budget=Number(val)*10000;saveState();renderSummary();renderTabs();}
+}
+
+function updH(tid,hid,field,val){
+  const t=state.teachers.find(x=>x.id===tid); if(!t)return;
+  const h=t.holdings.find(x=>x.id==hid); if(!h)return;
+  h[field]=val;
+  saveState();
+  renderStats();
+  renderMain();
+  if(document.getElementById('summary-panel').classList.contains('open')) renderSummary();
+}
+
+function togM(tid,hid){
+  const t=state.teachers.find(x=>x.id===tid); if(!t)return;
+  const h=t.holdings.find(x=>x.id==hid); if(!h)return;
+  h.isMargin=!h.isMargin;
+  saveState();
+  renderMain();
+  renderStats();
+}
+
+function addH(tid){
+  const t=state.teachers.find(x=>x.id===tid);
+  if(t){t.holdings.push(newH());saveState();renderMain();}
+}
+
+function delH(tid,hid){
+  const t=state.teachers.find(x=>x.id===tid);
+  if(t && t.holdings.length > 1){
+    t.holdings=t.holdings.filter(h=>h.id!=hid);
+    saveState();
+    renderMain();
+    renderStats();
+  }
+}
+
+function updNotes(tid,val){
+  const t=state.teachers.find(x=>x.id===tid); if(t){t.notes=val;saveState();}
+}
+
+render();
+</script>
+</body>
+</html>
