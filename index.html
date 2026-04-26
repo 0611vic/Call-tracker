@@ -79,8 +79,9 @@ button{cursor:pointer;font-family:var(--font)}
 .h-main.hm{border-radius:10px 10px 0 0;border-bottom-color:transparent}
 .h-main.at-stop{background:#E05C7A11;border-color:#E05C7A44}
 .h-main.mforce{background:#E05C7A22;border-color:#E05C7A88}
-.ci{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:12px;outline:none;width:100%;transition:border-color .15s;color:var(--text)}
+.ci{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:12px;outline:none;width:100%;transition:border-color .15s;color:var(--text);display:inline-block}
 .ci:focus{border-color:var(--muted)}
+.ci:empty::before{content:attr(placeholder);color:var(--dim)}
 .ci.num{font-family:var(--mono)}
 .ci.warn{border-color:var(--red);color:var(--red)}
 .ci.dt{font-family:var(--mono);font-size:11px}
@@ -286,7 +287,7 @@ function renderMain(){
     rows+=`<div class="h-row">
       <div class="h-main${h.isMargin?' hm':''} ${mc}" style="grid-template-columns:${cols}">
         <input class="ci dt" type="date" value="${h.date||''}" onchange="updH('${t.id}','${h.id}','date',this.value)" autocomplete="off"/>
-        <input class="ci" type="text" placeholder="名稱" value="${h.stock||''}" oninput="updH('${t.id}','${h.id}','stock',this.value)" autocomplete="one-time-code"/>
+        <span class="ci" contenteditable="true" placeholder="股票名稱" oninput="updH('${t.id}','${h.id}','stock',this.innerText)">${h.stock||''}</span>
         <input class="ci num" type="number" placeholder="Call價" value="${h.callPrice||''}" oninput="updH('${t.id}','${h.id}','callPrice',this.value)" autocomplete="off"/>
         <input class="ci num" type="number" placeholder="均價" value="${h.myPrice||''}" oninput="updH('${t.id}','${h.id}','myPrice',this.value)" autocomplete="off"/>
         <input class="ci num" type="number" placeholder="張" value="${h.shares||''}" oninput="updH('${t.id}','${h.id}','shares',this.value)" autocomplete="off"/>
@@ -361,7 +362,9 @@ function updH(tid,hid,field,val){
   h[field]=val;
   saveState();
   renderStats();
-  renderMain();
+  // 注意：如果正在編輯的是 contenteditable，為了不讓游標跳走，我們不重新 renderMain()
+  // 但會更新其他相關的 UI
+  renderStats();
   if(document.getElementById('summary-panel').classList.contains('open')) renderSummary();
 }
 
@@ -379,7 +382,7 @@ function addH(tid){
   if(t){t.holdings.push(newH());saveState();renderMain();}
 }
 
-function deleteH(tid,hid){
+function delH(tid,hid){
   const t=state.teachers.find(x=>x.id===tid);
   if(t && t.holdings.length > 1){
     t.holdings=t.holdings.filter(h=>h.id!=hid);
@@ -387,10 +390,6 @@ function deleteH(tid,hid){
     renderMain();
     renderStats();
   }
-}
-
-function delH(tid,hid){
-  deleteH(tid,hid);
 }
 
 function updNotes(tid,val){
