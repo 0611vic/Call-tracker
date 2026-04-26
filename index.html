@@ -21,7 +21,6 @@
 html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-tap-highlight-color:transparent}
 input,select,textarea{font-family:inherit;color:var(--text)}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
-input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.4) brightness(1.5)}
 button{cursor:pointer;font-family:var(--font)}
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
@@ -79,9 +78,8 @@ button{cursor:pointer;font-family:var(--font)}
 .h-main.hm{border-radius:10px 10px 0 0;border-bottom-color:transparent}
 .h-main.at-stop{background:#E05C7A11;border-color:#E05C7A44}
 .h-main.mforce{background:#E05C7A22;border-color:#E05C7A88}
-.ci{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:12px;outline:none;width:100%;transition:border-color .15s;color:var(--text);display:inline-block}
+.ci{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:12px;outline:none;width:100%;transition:border-color .15s;color:var(--text)}
 .ci:focus{border-color:var(--muted)}
-.ci:empty::before{content:attr(placeholder);color:var(--dim)}
 .ci.num{font-family:var(--mono)}
 .ci.warn{border-color:var(--red);color:var(--red)}
 .ci.dt{font-family:var(--mono);font-size:11px}
@@ -165,8 +163,14 @@ const TEACHERS=[
   {id:'yuan',name:'朱家泓',color:'#7B8FE8'},
 ];
 
+// 預設日期格式改為 YYYY/M/D
+function getTodayStr(){
+  const d = new Date();
+  return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+}
+
 function newH(){
-  return {id:Date.now()+Math.random(),date:'',stock:'',callPrice:'',myPrice:'',shares:'',currentPrice:'',stopLoss:'',isMargin:false,marginRatio:'6'};
+  return {id:Date.now()+Math.random(),date:getTodayStr(),stock:'',callPrice:'',myPrice:'',shares:'',currentPrice:'',stopLoss:'',isMargin:false,marginRatio:'6'};
 }
 
 function loadState(){
@@ -286,11 +290,11 @@ function renderMain(){
     }
     rows+=`<div class="h-row">
       <div class="h-main${h.isMargin?' hm':''} ${mc}" style="grid-template-columns:${cols}">
-        <input class="ci dt" type="date" value="${h.date||''}" onchange="updH('${t.id}','${h.id}','date',this.value)" autocomplete="off"/>
-        <span class="ci" contenteditable="true" placeholder="股票名稱" oninput="updH('${t.id}','${h.id}','stock',this.innerText)">${h.stock||''}</span>
+        <input class="ci dt" type="text" value="${h.date||''}" oninput="updH('${t.id}','${h.id}','date',this.value)" autocomplete="off"/>
+        <input class="ci" type="text" placeholder="股票" value="${h.stock||''}" oninput="updH('${t.id}','${h.id}','stock',this.value)" autocomplete="one-time-code"/>
         <input class="ci num" type="number" placeholder="Call價" value="${h.callPrice||''}" oninput="updH('${t.id}','${h.id}','callPrice',this.value)" autocomplete="off"/>
         <input class="ci num" type="number" placeholder="均價" value="${h.myPrice||''}" oninput="updH('${t.id}','${h.id}','myPrice',this.value)" autocomplete="off"/>
-        <input class="ci num" type="number" placeholder="張" value="${h.shares||''}" oninput="updH('${t.id}','${h.id}','shares',this.value)" autocomplete="off"/>
+        <input class="ci num" type="number" placeholder="股數" value="${h.shares||''}" oninput="updH('${t.id}','${h.id}','shares',this.value)" autocomplete="off"/>
         <input class="ci num${atStop||mf?' warn':''}" type="number" placeholder="現價" value="${h.currentPrice||''}" oninput="updH('${t.id}','${h.id}','currentPrice',this.value)" autocomplete="off"/>
         <input class="ci num" type="number" placeholder="停損" value="${h.stopLoss||''}" oninput="updH('${t.id}','${h.id}','stopLoss',this.value)" autocomplete="off"/>
         ${pnlHtml}
@@ -321,7 +325,7 @@ function renderMain(){
     <div id="table-wrap">
       <div class="col-headers" style="grid-template-columns:${cols}">
         <div class="col-h">日期</div><div class="col-h">股票</div><div class="col-h">Call價</div>
-        <div class="col-h">均價</div><div class="col-h">張數</div><div class="col-h">現價</div>
+        <div class="col-h">均價</div><div class="col-h">股數</div><div class="col-h">現價</div>
         <div class="col-h">停損</div><div class="col-h">損益</div><div class="col-h"></div>
       </div>
       ${rows}
@@ -362,9 +366,7 @@ function updH(tid,hid,field,val){
   h[field]=val;
   saveState();
   renderStats();
-  // 注意：如果正在編輯的是 contenteditable，為了不讓游標跳走，我們不重新 renderMain()
-  // 但會更新其他相關的 UI
-  renderStats();
+  renderMain();
   if(document.getElementById('summary-panel').classList.contains('open')) renderSummary();
 }
 
