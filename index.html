@@ -126,21 +126,21 @@ button{cursor:pointer;font-family:var(--font)}
     <div class="asset-card" style="border-color:#E8A83833">
       <label>總資產</label>
       <div class="asset-row"><span class="asset-prefix">NT$</span>
-        <input type="number" id="a-total" placeholder="0" oninput="saveCash()" style="color:var(--gold)"/>
+        <input type="number" id="a-total" placeholder="0" oninput="saveCash()" style="color:var(--gold)" autocomplete="off"/>
       </div>
       <div class="asset-hint" id="h-total"></div>
     </div>
     <div class="asset-card" style="border-color:#4FC3A133">
       <label>可用現金</label>
       <div class="asset-row"><span class="asset-prefix">NT$</span>
-        <input type="number" id="a-cash" placeholder="0" oninput="saveCash()" style="color:var(--teal)"/>
+        <input type="number" id="a-cash" placeholder="0" oninput="saveCash()" style="color:var(--teal)" autocomplete="off"/>
       </div>
       <div class="asset-hint" id="h-cash"></div>
     </div>
     <div class="asset-card" style="border-color:#7B8FE833">
       <label>鎖定資金</label>
       <div class="asset-row"><span class="asset-prefix">NT$</span>
-        <input type="number" id="a-locked" placeholder="0" oninput="saveCash()" style="color:var(--blue)"/>
+        <input type="number" id="a-locked" placeholder="0" oninput="saveCash()" style="color:var(--blue)" autocomplete="off"/>
       </div>
       <div class="asset-hint" id="h-locked"></div>
     </div>
@@ -236,7 +236,7 @@ function renderSummary(){
     return `<div class="bcard" style="border:1px solid ${t.color}33">
       <div class="bcard-top">
         <span class="bcard-name" style="color:${t.color}">${t.name}</span>
-        <div class="bcard-iw"><input type="number" value="${t.budget/10000}" onchange="updBudget('${t.id}',this.value)"/><span>萬</span></div>
+        <div class="bcard-iw"><input type="number" value="${t.budget/10000}" onchange="updBudget('${t.id}',this.value)" autocomplete="off"/><span>萬</span></div>
       </div>
       <div class="wbar-bg"><div class="wbar" style="width:${Math.min(s.wl,100)}%;background:${wc}"></div></div>
       <div class="bcard-stats"><span>已用 ${fmtM(s.inv)}</span><span style="color:${rem>=0?'var(--teal)':'var(--red)'}">剩 ${fmtM(Math.abs(rem))}</span></div>
@@ -285,13 +285,13 @@ function renderMain(){
     }
     rows+=`<div class="h-row">
       <div class="h-main${h.isMargin?' hm':''} ${mc}" style="grid-template-columns:${cols}">
-        <input class="ci dt" type="date" value="${h.date||''}" onchange="updH('${t.id}','${h.id}','date',this.value)"/>
-        <input class="ci" type="text" placeholder="名稱" value="${h.stock||''}" oninput="updH('${t.id}','${h.id}','stock',this.value)"/>
-        <input class="ci num" type="number" placeholder="Call價" value="${h.callPrice||''}" oninput="updH('${t.id}','${h.id}','callPrice',this.value)"/>
-        <input class="ci num" type="number" placeholder="均價" value="${h.myPrice||''}" oninput="updH('${t.id}','${h.id}','myPrice',this.value)"/>
-        <input class="ci num" type="number" placeholder="張" value="${h.shares||''}" oninput="updH('${t.id}','${h.id}','shares',this.value)"/>
-        <input class="ci num${atStop||mf?' warn':''}" type="number" placeholder="現價" value="${h.currentPrice||''}" oninput="updH('${t.id}','${h.id}','currentPrice',this.value)"/>
-        <input class="ci num" type="number" placeholder="停損" value="${h.stopLoss||''}" oninput="updH('${t.id}','${h.id}','stopLoss',this.value)"/>
+        <input class="ci dt" type="date" value="${h.date||''}" onchange="updH('${t.id}','${h.id}','date',this.value)" autocomplete="off"/>
+        <input class="ci" type="text" placeholder="名稱" value="${h.stock||''}" oninput="updH('${t.id}','${h.id}','stock',this.value)" autocomplete="one-time-code"/>
+        <input class="ci num" type="number" placeholder="Call價" value="${h.callPrice||''}" oninput="updH('${t.id}','${h.id}','callPrice',this.value)" autocomplete="off"/>
+        <input class="ci num" type="number" placeholder="均價" value="${h.myPrice||''}" oninput="updH('${t.id}','${h.id}','myPrice',this.value)" autocomplete="off"/>
+        <input class="ci num" type="number" placeholder="張" value="${h.shares||''}" oninput="updH('${t.id}','${h.id}','shares',this.value)" autocomplete="off"/>
+        <input class="ci num${atStop||mf?' warn':''}" type="number" placeholder="現價" value="${h.currentPrice||''}" oninput="updH('${t.id}','${h.id}','currentPrice',this.value)" autocomplete="off"/>
+        <input class="ci num" type="number" placeholder="停損" value="${h.stopLoss||''}" oninput="updH('${t.id}','${h.id}','stopLoss',this.value)" autocomplete="off"/>
         ${pnlHtml}
         <button class="del-btn" onclick="delH('${t.id}','${h.id}')">×</button>
       </div>
@@ -379,7 +379,7 @@ function addH(tid){
   if(t){t.holdings.push(newH());saveState();renderMain();}
 }
 
-function delH(tid,hid){
+function deleteH(tid,hid){
   const t=state.teachers.find(x=>x.id===tid);
   if(t && t.holdings.length > 1){
     t.holdings=t.holdings.filter(h=>h.id!=hid);
@@ -387,6 +387,10 @@ function delH(tid,hid){
     renderMain();
     renderStats();
   }
+}
+
+function delH(tid,hid){
+  deleteH(tid,hid);
 }
 
 function updNotes(tid,val){
